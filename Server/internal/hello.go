@@ -2,7 +2,7 @@ package internal
 
 import "fmt"
 
-// HelloWorld prints "Hello World" to the console
+// HelloWorld prints a friendly greeting to the console
 func HelloWorld() {
-	fmt.Println("Hello World")
+	fmt.Println("Hello World! How are you?")
 }
