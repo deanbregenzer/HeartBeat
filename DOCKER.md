@@ -46,7 +46,7 @@ docker compose up --build
 │         │  │        │
 │  ┌──────┘  └─────┐  │
 │  │               │  │
-│ Client1       Client2│
+│ Client1      Client2│
 │                     │
 └─────────────────────┘
 ```
