@@ -13,13 +13,15 @@ import (
 )
 
 const (
-	ServerAddr     = ":8080"
-	maxMessageSize = 1024 * 1024 // 1 MB
-	readTimeout    = 10 * time.Second
-	writeTimeout   = 10 * time.Second
+	ServerAddr          = ":8080"
+	maxMessageSize      = 1024 * 1024 // 1 MB
+	maxConnectionsPerIP = 50          // Max connections per IP address
+	readTimeout         = 10 * time.Second
+	writeTimeout        = 10 * time.Second
 )
 
 var activeConnections atomic.Int64
+var connManager = NewConnectionManager(maxConnectionsPerIP)
 
 // Start initializes and starts the WebSocket server
 func Start(ctx context.Context) error {
@@ -61,8 +63,18 @@ func Start(ctx context.Context) error {
 	return nil
 }
 
-// handleWebSocket handles incoming WebSocket connections
+// handleWebSocket handles incoming WebSocket connections with security checks
 func handleWebSocket(w http.ResponseWriter, r *http.Request) {
+	// 1. Check connection limit for this IP
+	clientIP := r.RemoteAddr
+	if !connManager.CheckLimit(clientIP) {
+		http.Error(w, "Too many connections from your IP", http.StatusTooManyRequests)
+		log.Printf("Connection limit exceeded for %s", clientIP)
+		return
+	}
+	defer connManager.Release(clientIP)
+
+	// 2. Accept WebSocket connection
 	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
 		OriginPatterns:  []string{"localhost:*"},
 		CompressionMode: websocket.CompressionDisabled,
@@ -76,8 +88,8 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	activeConnections.Add(1)
 	defer activeConnections.Add(-1)
 
-	log.Printf("New WebSocket connection from %s (active: %d)",
-		r.RemoteAddr, activeConnections.Load())
+	log.Printf("New WebSocket connection from %s (active: %d, ip_conns: %d)",
+		r.RemoteAddr, activeConnections.Load(), connManager.GetConnectionCount(clientIP))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
