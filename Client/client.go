@@ -19,7 +19,10 @@ const (
 // Run connects to the WebSocket server and sends test messages
 func Run(ctx context.Context) error {
 	// Get server URL from environment or use default
-	serverURL := os.Getenv("WEBSOCKET_SERVER")
+	serverURL := os.Getenv("SERVER_URL")
+	if serverURL == "" {
+		serverURL = os.Getenv("WEBSOCKET_SERVER")
+	}
 	if serverURL == "" {
 		serverURL = defaultServerURL
 	}
