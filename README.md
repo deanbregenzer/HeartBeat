@@ -50,30 +50,108 @@ go mod download
 
 ## Usage
 
+### Quick Start with Docker Compose (Recommended)
+
+The easiest way to run the entire setup is with Docker Compose:
+
+```bash
+docker compose up
+```
+
+This will:
+- Build the server and client containers
+- Start the WebSocket server on `localhost:8080`
+- Start two client instances that automatically connect to the server
+- Enable team members to connect by accessing your machine's IP on port 8080
+
+To stop all services:
+```bash
+docker compose down
+```
+
+To rebuild after code changes:
+```bash
+docker compose up --build
+```
+
+### Building the Application (Local Development)
+
+First, build the application:
+
+```bash
+go build -o cysl .
+```
+
 ### Running the Server
 
 Start the WebSocket server:
+
+```bash
+./cysl -mode=server
+```
+
+Or using go run:
+
 ```bash
 go run main.go -mode=server
 ```
 
-The server will start listening on `localhost:8080`.
+The server will start on `http://localhost:8080`
 
 ### Running the Client
 
 In a separate terminal, start the client:
+
+```bash
+./cysl -mode=client
+```
+
+Or using go run:
 ```bash
 go run main.go -mode=client
 ```
 
-The client will connect to the server and send 5 test messages.
+The client will:
+- Connect to the server at `ws://localhost:8080/ws`
+- Start heartbeat monitoring (pings every 30s)
+- Send 5 test messages
+- Display server responses
+- Show heartbeat metrics
 
 ### Custom Server URL
 
-You can specify a custom server URL for the client using the `WEBSOCKET_SERVER` environment variable:
+You can specify a custom server URL for the client using the `SERVER_URL` or `WEBSOCKET_SERVER` environment variable:
 ```bash
-WEBSOCKET_SERVER=ws://example.com:8080/ws go run main.go -mode=client
+SERVER_URL=ws://example.com:8080/ws go run main.go -mode=client
 ```
+
+### Team Connectivity with Docker
+
+To allow team members to connect to your Docker server:
+
+1. Start the server with Docker Compose:
+   ```bash
+   docker compose up server
+   ```
+
+2. Find your machine's IP address:
+   ```bash
+   hostname -I  # Linux
+   ipconfig     # Windows
+   ```
+
+3. Team members can connect using your IP:
+   ```bash
+   SERVER_URL=ws://YOUR_IP:8080/ws ./cysl -mode=client
+   ```
+
+   Or with Docker:
+   ```bash
+   docker run --rm \
+     -e SERVER_URL=ws://YOUR_IP:8080/ws \
+     $(docker build -q .) \
+     ./cysl -mode=client
+   ```
 
 ### Health Check
 
