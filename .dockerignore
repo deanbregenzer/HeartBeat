@@ -1,0 +1,22 @@
+# Ignore build artifacts
+cysl
+*.exe
+*.test
+*.out
+
+# Ignore documentation and git
+*.md
+.git
+.gitignore
+*.typ
+*.pdf
+
+# Ignore IDE files
+.vscode
+.idea
+*.swp
+*.swo
+
+# Ignore temp files
+tmp/
+*.log
