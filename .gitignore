@@ -1,0 +1,18 @@
+# Claude
+.claude/
+CLAUDE.md
+
+# Zone Identifier (Windows WSL)
+*:Zone.Identifier
+
+# Documentation source files
+*.typ
+*.pdf
+works.bib
+Documentation.md
+
+# Build artifacts
+cysl
+
+# IDE
+.idea/
