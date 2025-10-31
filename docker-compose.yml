@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # WebSocket Server
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: websocket-server
+    ports:
+      - "8080:8080"
+    command: ["./cysl", "-mode=server"]
+    networks:
+      - websocket-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
+
+  # WebSocket Client 1
+  client1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: websocket-client1
+    command: ["./cysl", "-mode=client"]
+    environment:
+      - SERVER_URL=ws://server:8080/ws
+    depends_on:
+      server:
+        condition: service_healthy
+    networks:
+      - websocket-network
+    restart: on-failure
+
+  # WebSocket Client 2 (optional - demonstrates multiple clients)
+  client2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: websocket-client2
+    command: ["./cysl", "-mode=client"]
+    environment:
+      - SERVER_URL=ws://server:8080/ws
+    depends_on:
+      server:
+        condition: service_healthy
+    networks:
+      - websocket-network
+    restart: on-failure
+
+networks:
+  websocket-network:
+    driver: bridge
