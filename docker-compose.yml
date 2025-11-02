@@ -23,7 +23,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: websocket-client1
     command: ["./cysl", "-mode=client"]
     environment:
       - SERVER_URL=ws://server:8080/ws
@@ -39,7 +38,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: websocket-client2
     command: ["./cysl", "-mode=client"]
     environment:
       - SERVER_URL=ws://server:8080/ws

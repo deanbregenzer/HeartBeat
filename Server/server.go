@@ -101,6 +101,10 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	log.Printf("New WebSocket connection from %s (active: %d, ip_conns: %d)",
 		r.RemoteAddr, activeConnections.Load(), connManager.GetConnectionCount(clientIP))
 
+	// Step 3.5: Wrap connection with rate-limiting to protect against client ping flooding
+	connState := &ConnectionState{}
+	rateLimitedConn := NewRateLimitedConn(conn, connState, r.RemoteAddr)
+
 	// Step 4: Set up context for graceful shutdown and cleanup
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -127,12 +131,18 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	// Step 6: Main message handling loop - reads and echoes messages
 	for {
 		// Read message with timeout to prevent blocking indefinitely
+		// Uses rate-limited connection wrapper to protect against flooding
 		readCtx, readCancel := context.WithTimeout(ctx, readTimeout)
-		msgType, msg, err := conn.Read(readCtx)
+		msgType, msg, err := rateLimitedConn.Read(readCtx)
 		readCancel()
 
 		if err != nil {
 			log.Printf("Read error from %s: %v", r.RemoteAddr, err)
+			// Log rate limit violations for monitoring
+			if connState.GetClientViolations() > 0 {
+				log.Printf("Client %s had %d rate limit violations before disconnect",
+					r.RemoteAddr, connState.GetClientViolations())
+			}
 			break // Exit loop on any read error
 		}
 

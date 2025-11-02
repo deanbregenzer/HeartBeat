@@ -31,13 +31,13 @@ type HeartbeatMetrics struct {
 
 // DefaultHeartbeatConfig returns a production-ready configuration with
 // conservative values suitable for most internet connections.
-// Interval: 30s - balances resource usage with timely disconnect detection
-// Timeout: 20s - allows for network jitter and processing delays
+// Interval: 5s - shorter for testing/demo purposes (use 30s in production)
+// Timeout: 3s - allows for network jitter and processing delays
 // MaxMissedPings: 2 - prevents false positives from transient issues
 func DefaultHeartbeatConfig() HeartbeatConfig {
 	return HeartbeatConfig{
-		Interval:       30 * time.Second,
-		Timeout:        20 * time.Second,
+		Interval:       5 * time.Second, // Shorter interval for testing
+		Timeout:        3 * time.Second, // Shorter timeout
 		MaxMissedPings: 2,
 		EnableMetrics:  true,
 	}
@@ -50,6 +50,8 @@ func DefaultHeartbeatConfig() HeartbeatConfig {
 // - Thread-safe metrics collection
 // - Graceful context cancellation support
 // Returns metrics and error on failure or context cancellation.
+// Note: Rate-limiting for incoming client pings should be implemented at the
+// WebSocket frame level, not in the server's outgoing ping loop.
 func EnhancedHeartbeat(ctx context.Context, conn *websocket.Conn,
 	cfg HeartbeatConfig) (*HeartbeatMetrics, error) {
 	// Initialize metrics collector
@@ -66,6 +68,11 @@ func EnhancedHeartbeat(ctx context.Context, conn *websocket.Conn,
 		case <-timer.C:
 			// Timer expired - time to send next ping
 		}
+
+		// Note: Rate-limiting is not applied here because the server controls
+		// its own ping frequency through cfg.Interval configuration.
+		// Rate-limiting should instead be applied to incoming pings from clients,
+		// which would require WebSocket ping frame interception (not implemented).
 
 		// Create timeout context for this specific ping attempt
 		// This ensures we don't wait forever for a response

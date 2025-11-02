@@ -29,8 +29,8 @@ type HeartbeatMetrics struct {
 // DefaultClientHeartbeatConfig returns client-side heartbeat configuration
 func DefaultClientHeartbeatConfig() HeartbeatConfig {
 	return HeartbeatConfig{
-		Interval:       30 * time.Second,
-		Timeout:        20 * time.Second,
+		Interval:       5 * time.Second, // Shorter interval for testing
+		Timeout:        3 * time.Second, // Shorter timeout
 		MaxMissedPings: 2,
 		EnableMetrics:  true,
 	}
